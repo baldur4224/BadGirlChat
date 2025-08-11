@@ -6,10 +6,13 @@ const publicDir = path.join(__dirname, 'public');
 const dataDir = path.join(__dirname, 'data');
 const msgFile = path.join(dataDir, 'messages.json');
 const photoFile = path.join(dataDir, 'photos.json');
+const trustFile = path.join(dataDir, 'trust.json');
+const memoriesDir = path.join(dataDir, 'memories');
 
 fs.mkdirSync(publicDir, { recursive: true });
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(path.join(publicDir, 'uploads'), { recursive: true });
+fs.mkdirSync(memoriesDir, { recursive: true });
 
 function readJSON(file) {
   try {
@@ -25,6 +28,30 @@ function writeJSON(file, data) {
 
 let messages = readJSON(msgFile);
 let photos = readJSON(photoFile);
+let trust = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(trustFile, 'utf8')).level || 0;
+  } catch {
+    return 0;
+  }
+})();
+
+function saveTrust(){
+  fs.writeFileSync(trustFile, JSON.stringify({level: trust}, null, 2));
+}
+
+function listMemories(){
+  try {
+    return fs.readdirSync(memoriesDir)
+      .filter(f => f.endsWith('.txt'))
+      .map(name => ({
+        name,
+        content: fs.readFileSync(path.join(memoriesDir, name), 'utf8')
+      }));
+  } catch {
+    return [];
+  }
+}
 
 function serveStatic(req, res) {
   const relPath = req.url === '/' ? '/index.html' : req.url;
@@ -88,6 +115,58 @@ const server = http.createServer((req, res) => {
           writeJSON(photoFile, photos);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ url: '/uploads/' + filename }));
+        });
+      } catch {
+        res.writeHead(400);
+        res.end('invalid');
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/api/trust') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ level: trust }));
+  }
+
+  if (req.method === 'POST' && req.url === '/api/trust') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { delta } = JSON.parse(body);
+        trust += Number(delta) || 0;
+        saveTrust();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ level: trust }));
+      } catch {
+        res.writeHead(400);
+        res.end('invalid');
+      }
+    });
+    return;
+  }
+
+  if (req.method === 'GET' && req.url === '/api/memories') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(listMemories()));
+  }
+
+  if (req.method === 'POST' && req.url === '/api/memory') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { name, content } = JSON.parse(body);
+        const safe = (name || 'memory').replace(/[^a-z0-9\-\[\]_]/gi, '_');
+        const file = safe.endsWith('.txt') ? safe : safe + '.txt';
+        fs.writeFile(path.join(memoriesDir, file), content || '', err => {
+          if (err) {
+            res.writeHead(500);
+            return res.end('error');
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
         });
       } catch {
         res.writeHead(400);

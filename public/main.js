@@ -93,3 +93,70 @@ async function loadPhotos(){
   }catch{}
 }
 loadPhotos();
+
+// Trust level logic
+const trustLevel = document.getElementById('trustLevel');
+const trustMinus = document.getElementById('trustMinus');
+const trustPlus = document.getElementById('trustPlus');
+
+async function loadTrust(){
+  try{
+    const res = await fetch('/api/trust');
+    const data = await res.json();
+    trustLevel.textContent = data.level;
+  }catch{}
+}
+
+async function changeTrust(delta){
+  try{
+    const res = await fetch('/api/trust', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({delta})
+    });
+    const data = await res.json();
+    trustLevel.textContent = data.level;
+  }catch{}
+}
+
+trustMinus?.addEventListener('click', () => changeTrust(-1));
+trustPlus?.addEventListener('click', () => changeTrust(1));
+loadTrust();
+
+// Memories
+const memList = document.getElementById('memoryList');
+const memName = document.getElementById('memName');
+const memContent = document.getElementById('memContent');
+const saveMemory = document.getElementById('saveMemory');
+
+async function loadMemories(){
+  try{
+    const res = await fetch('/api/memories');
+    const data = await res.json();
+    memList.innerHTML = '';
+    data.forEach(m => {
+      const div = document.createElement('div');
+      div.textContent = `${m.name}: ${m.content}`;
+      memList.appendChild(div);
+    });
+  }catch{}
+}
+
+async function sendMemory(){
+  const name = memName.value.trim();
+  const content = memContent.value.trim();
+  if(!name || !content) return;
+  try{
+    await fetch('/api/memory', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, content})
+    });
+    memName.value='';
+    memContent.value='';
+    loadMemories();
+  }catch{}
+}
+
+saveMemory?.addEventListener('click', sendMemory);
+loadMemories();
