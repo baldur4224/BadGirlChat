@@ -1,0 +1,13 @@
+{
+  "name": "badgirlchat",
+  "version": "1.0.0",
+  "description": "Single-page chat application served via Node HTTP server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
