@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>BadChat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav>
+    <button data-tab="chat">Chat</button>
+    <button data-tab="settings">Einstellungen</button>
+    <button data-tab="memories">Erinnerungen</button>
+    <button data-tab="photos">Fotos</button>
+  </nav>
+  <section id="chat" class="tab">
+    <div id="trustContainer">Vertrauenslevel: <span id="trustLevel">0</span>
+      <button id="trustMinus">-</button>
+      <button id="trustPlus">+</button>
+    </div>
+    <div id="messages" class="messages"></div>
+    <input id="msgInput" type="text" placeholder="Nachricht" />
+    <button id="sendBtn">Senden</button>
+  </section>
+  <section id="settings" class="tab" hidden>
+    <h2>Einstellungen</h2>
+    <p>Platzhalter für Charakter-Einstellungen.</p>
+  </section>
+  <section id="memories" class="tab" hidden>
+    <h2>Erinnerungen</h2>
+    <div id="memoryList" class="memories"></div>
+    <input id="memName" type="text" placeholder="Dateiname" />
+    <textarea id="memContent" placeholder="Inhalt"></textarea>
+    <button id="saveMemory">Speichern</button>
+  </section>
+  <section id="photos" class="tab" hidden>
+    <h2>Fotos</h2>
+    <input type="file" id="photoInput" multiple />
+    <div id="photoGallery" class="gallery"></div>
+  </section>
+  <script src="main.js"></script>
+</body>
+</html>
