@@ -19,6 +19,14 @@ function addMessage(role, text){
   messages.appendChild(div);
 }
 
+async function loadMessages(){
+  try{
+    const res = await fetch('/api/messages');
+    const data = await res.json();
+    data.forEach(m => addMessage(m.role === 'layler' ? 'Layler' : 'Du', m.text));
+  }catch{}
+}
+
 async function sendMessage(){
   const text = input.value.trim();
   if(!text) return;
@@ -41,15 +49,47 @@ sendBtn.addEventListener('click', sendMessage);
 input.addEventListener('keydown', e => {
   if(e.key === 'Enter') sendMessage();
 });
+loadMessages();
 
 // Photo preview
 const photoInput = document.getElementById('photoInput');
 const gallery = document.getElementById('photoGallery');
-photoInput?.addEventListener('change', e => {
-  [...e.target.files].forEach(f => {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(f);
-    img.alt = f.name;
-    gallery.appendChild(img);
+async function uploadPhoto(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try{
+        const res = await fetch('/api/photo', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({name:file.name, data: reader.result.split(',')[1]})
+        });
+        const data = await res.json();
+        const img = document.createElement('img');
+        img.src = data.url;
+        img.alt = file.name;
+        gallery.appendChild(img);
+        resolve();
+      }catch(err){reject(err);}
+    };
+    reader.readAsDataURL(file);
   });
+}
+
+photoInput?.addEventListener('change', e => {
+  [...e.target.files].forEach(f => uploadPhoto(f));
 });
+
+async function loadPhotos(){
+  try{
+    const res = await fetch('/api/photos');
+    const data = await res.json();
+    data.forEach(name => {
+      const img = document.createElement('img');
+      img.src = '/uploads/' + name;
+      img.alt = name;
+      gallery.appendChild(img);
+    });
+  }catch{}
+}
+loadPhotos();
